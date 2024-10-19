@@ -21,19 +21,21 @@ echo -e " \033[32;5m                                                           \
 #############################################
 
 # Set the IP addresses of the admin, managers, and workers nodes
-admin=192.168.3.5
-manager1=192.168.3.21
-manager2=192.168.3.22
-manager3=192.168.3.23
-worker1=192.168.3.24
-worker2=192.168.3.25
+admin=10.0.200.17
+manager1=10.0.40.10
+manager2=10.0.40.11
+manager3=10.0.40.12
+worker1=10.0.40.20
+worker2=10.0.40.21
+worker3=10.0.40.22
 
 # Set the workers' hostnames (if using cloud-init in Proxmox it's the name of the VM)
-workerHostname1=dockerSwarm-04
-workerHostname2=dockerSwarm-05
+workerHostname1=dkr-swm-wkr-1
+workerHostname2=dkr-swm-wkr-2
+workerHostname3=dkr-swm-wkr-3
 
 # User of remote machines
-user=ubuntu
+user=docker
 
 # Interface used on remotes
 interface=eth0
@@ -45,10 +47,10 @@ allmanagers=($manager1 $manager2 $manager3)
 managers=($manager2 $manager3)
 
 # Array of worker nodes
-workers=($worker1 $worker2)
+workers=($worker1 $worker2 $worker3)
 
 # Array of all
-all=($manager1 $manager2 $manager3 $worker1 $worker2)
+all=($manager1 $manager2 $manager3 $worker1 $worker2 $worker3)
 
 #ssh certificate name variable
 certName=id_rsa
@@ -60,13 +62,13 @@ certName=id_rsa
 sudo timedatectl set-ntp off
 sudo timedatectl set-ntp on
 
-# Move SSH certs to ~/.ssh and change permissions
-cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
-chmod 600 /home/$user/.ssh/$certName 
-chmod 644 /home/$user/.ssh/$certName.pub
+# Move SSH certs to ~/.ssh and change permissions - only required if using a new VM as admin
+# cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
+# chmod 600 /home/$user/.ssh/$certName 
+# chmod 644 /home/$user/.ssh/$certName.pub
 
 # Create SSH Config file to ignore checking (don't use in production!)
-echo "StrictHostKeyChecking no" > ~/.ssh/config
+# echo "StrictHostKeyChecking no" > ~/.ssh/config
 
 #add ssh keys for all nodes
 for node in "${all[@]}"; do
@@ -147,12 +149,13 @@ done
 
 # Step 5: Create GlusterFS Cluster across all nodes (connect to Manager1) - we will also label our nodes to restrict deployment of services to workers only
 ssh -tt $user@$manager1 -i ~/.ssh/$certName sudo su <<EOF
-gluster peer probe $manager1; gluster peer probe $manager2; gluster peer probe $manager3; gluster peer probe $worker1; gluster peer probe $worker2;
-gluster volume create staging-gfs replica 5 $manager1:/gluster/volume1 $manager2:/gluster/volume1 $manager3:/gluster/volume1 $worker1:/gluster/volume1 $worker2:/gluster/volume1 force
+gluster peer probe $manager1; gluster peer probe $manager2; gluster peer probe $manager3; gluster peer probe $worker1; gluster peer probe $worker2; gluster peer probe $worker3;
+gluster volume create staging-gfs replica 6 $manager1:/gluster/volume1 $manager2:/gluster/volume1 $manager3:/gluster/volume1 $worker1:/gluster/volume1 $worker2:/gluster/volume1 $worker3:/gluster/volume1 force
 gluster volume start staging-gfs
 chmod 666 /var/run/docker.sock
 docker node update --label-add worker=true $workerHostname1
 docker node update --label-add worker=true $workerHostname2
+docker node update --label-add worker=true $workerHostname3
 exit
 EOF
 echo -e " \033[32;5mGlusterFS created\033[0m"
@@ -172,7 +175,7 @@ done
 # Step 7: Add Portainer
 ssh -tt $user@$manager1 -i ~/.ssh/$certName sudo su <<EOF
 mkdir /mnt/Portainer
-curl -L https://raw.githubusercontent.com/JamesTurland/JimsGarage/main/Docker-Swarm/portainer-agent-stack.yml -o portainer-agent-stack.yml
+curl -L https://raw.githubusercontent.com/CoopsZA/Docker/tree/main/Docker-Swarm/portainer-agent-stack.yml -o portainer-agent-stack.yml
 docker stack deploy -c portainer-agent-stack.yml portainer
 docker node ls
 docker service ls
