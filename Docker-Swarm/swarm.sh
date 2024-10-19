@@ -21,7 +21,7 @@ echo -e " \033[32;5m                                                           \
 #############################################
 
 # Set the IP addresses of the admin, managers, and workers nodes
-admin=10.0.200.17
+admin=10.0.40.254
 manager1=10.0.40.10
 manager2=10.0.40.11
 manager3=10.0.40.12
