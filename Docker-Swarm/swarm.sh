@@ -64,11 +64,11 @@ sudo timedatectl set-ntp on
 
 # Move SSH certs to ~/.ssh and change permissions - only required if using a new VM as admin
 # cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
-# chmod 600 /home/$user/.ssh/$certName 
-# chmod 644 /home/$user/.ssh/$certName.pub
+chmod 600 /home/$user/.ssh/$certName 
+chmod 644 /home/$user/.ssh/$certName.pub
 
 # Create SSH Config file to ignore checking (don't use in production!)
-# echo "StrictHostKeyChecking no" > ~/.ssh/config
+echo "StrictHostKeyChecking no" > ~/.ssh/config
 
 #add ssh keys for all nodes
 for node in "${all[@]}"; do
