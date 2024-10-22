@@ -1,18 +1,10 @@
 #!/bin/bash
 
-echo -e " \033[33;5m    __  _          _        ___                            \033[0m"
-echo -e " \033[33;5m    \ \(_)_ __ ___( )__    / _ \__ _ _ __ __ _  __ _  ___  \033[0m"
-echo -e " \033[33;5m     \ \ | '_ \` _ \/ __|  / /_\/ _\` | '__/ _\` |/ _\` |/ _ \ \033[0m"
-echo -e " \033[33;5m  /\_/ / | | | | | \__ \ / /_\\  (_| | | | (_| | (_| |  __/ \033[0m"
-echo -e " \033[33;5m  \___/|_|_| |_| |_|___/ \____/\__,_|_|  \__,_|\__, |\___| \033[0m"
-echo -e " \033[33;5m                                               |___/       \033[0m"
-
 echo -e " \033[36;5m    ___          _             ___                         \033[0m"
 echo -e " \033[36;5m   |   \ ___  __| |_____ _ _  / __|_ __ ____ _ _ _ _ __    \033[0m"
 echo -e " \033[36;5m   | |) / _ \/ _| / / -_) '_| \__ \ V  V / _\` | '_| '  \   \033[0m"
 echo -e " \033[36;5m   |___/\___/\__|_\_\___|_|   |___/\_/\_/\__,_|_| |_|_|_|  \033[0m"
 echo -e " \033[36;5m                                                           \033[0m"
-echo -e " \033[32;5m             https://youtube.com/@jims-garage              \033[0m"
 echo -e " \033[32;5m                                                           \033[0m"
 
 
@@ -28,6 +20,10 @@ manager3=10.0.40.12
 worker1=10.0.40.20
 worker2=10.0.40.21
 worker3=10.0.40.22
+
+# Set the IP addresses of the default address pool and subnet mask
+defaultpool=10.0.44.0/22
+defaultmask=25
 
 # Set the workers' hostnames (if using cloud-init in Proxmox it's the name of the VM)
 workerHostname1=dkr-swm-wkr-1
@@ -110,7 +106,7 @@ done
 
 # Step 1: Create Swarm on first node
 ssh -tt $user@$manager1 -i ~/.ssh/$certName sudo su <<EOF
-docker swarm init --advertise-addr $manager1
+docker swarm init --default-addr-pool $defaultpool --default-addr-pool-mask-length $defaultmask --advertise-addr $manager1
 docker swarm join-token manager | sed -n 3p | grep -Po 'docker swarm join --token \\K[^\\s]*' > manager.txt
 docker swarm join-token worker | sed -n 3p | grep -Po 'docker swarm join --token \\K[^\\s]*' > worker.txt
 echo "StrictHostKeyChecking no" > ~/.ssh/config
